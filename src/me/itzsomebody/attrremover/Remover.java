@@ -1,17 +1,38 @@
 package me.itzsomebody.attrremover;
 
-import java.awt.event.*;
-import javax.swing.*;
-import java.awt.*;
-import java.util.zip.*;
-import java.io.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
 import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 @SuppressWarnings("serial")
 public class Remover extends JFrame {
-	private static int count = 0;
+    private static int count = 0;
+    private static List<String> classNames = new ArrayList<String>();
     private JTextField field;
     
     public static void main(String[] args) {
@@ -83,9 +104,9 @@ public class Remover extends JFrame {
                             process(input, output, 1);
                             checkFile(output);
                             if (count == 1) {
-                            	JOptionPane.showMessageDialog(null, "Removed Spigot CompileVersion attribute.", "Success", 1);
+                            	JOptionPane.showMessageDialog(null, "Removed Spigot CompileVersion attribute in:\n" + showMessagebuilder(), "Success", 1);
                             } else {
-                            	JOptionPane.showMessageDialog(null, "Removed Spigot " + String.valueOf(count) + " CompileVersion attributes.", "Success", 1);
+                            	JOptionPane.showMessageDialog(null, "Removed Spigot " + String.valueOf(count) + " CompileVersion attributes in:\n" + showMessagebuilder(), "Success", 1);
                             }
                             
                         }
@@ -178,14 +199,31 @@ public class Remover extends JFrame {
         }
     }
     
+    private static String showMessagebuilder() {
+        String newmessage = "";
+        try {
+        	for (int i = 0; i < classNames.size(); ++i) {
+                if (i == classNames.size()) {
+                	newmessage = newmessage + "    * " + classNames.get(i);
+                } else {
+                    newmessage = newmessage + "    * " + classNames.get(i) + "\n";
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return newmessage;
+    }
+    
     private static void removeAttr(ClassNode classNode) throws Throwable {
         if (classNode.attrs != null) {
-        	for (int i = 0; i < classNode.attrs.size(); ++i) {
-        		if (classNode.attrs.get(i).type.equals("CompileVersion")) {
-        			classNode.attrs.remove(i);
-        			++count;
-        		}
-        	}
+            for (int i = 0; i < classNode.attrs.size(); ++i) {
+                if (classNode.attrs.get(i).type.equals("CompileVersion")) {
+                    classNode.attrs.remove(i);
+                    classNames.add(classNode.name);
+                    ++count;
+                }
+            }
         }
     }
 }
